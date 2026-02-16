@@ -91,9 +91,16 @@
   // ============================================================
   function renderPersonInfo(data) {
     const s = data.saju;
+    const ts = data.trueSolarTime;
+    const sign = ts.correction >= 0 ? '+' : '';
+    const correctionText = `${ts.originalHour}시 ${String(ts.originalMinute).padStart(2,'0')}분 → 진태양시 ${ts.hour}시 ${String(ts.minute).padStart(2,'0')}분 (${sign}${ts.correction}분)`;
+
     document.getElementById('person-info').innerHTML = `
       <div><strong>${data.name}</strong> (${data.gender}성) · ${data.animal}띠</div>
       <div>${data.birthInfo.year}년 ${data.birthInfo.month}월 ${data.birthInfo.day}일 ${data.birthInfo.hour}시 ${data.birthInfo.minute}분 (양력)</div>
+      <div style="margin-top:4px; font-size:13px; color:#8B5CF6; background:#F5F3FF; padding:4px 10px; border-radius:6px; display:inline-block;">
+        ⏱ ${correctionText}
+      </div>
       <div style="margin-top:8px; font-size:20px; font-family:'Noto Serif KR',serif; letter-spacing:4px;">
         ${s.year.gan}${s.year.ji}년 ${s.month.gan}${s.month.ji}월 ${s.day.gan}${s.day.ji}일 ${s.hour.gan}${s.hour.ji}시
       </div>
@@ -196,13 +203,19 @@
   // ============================================================
   async function fetchAllSections(data) {
     const sectionNames = [
-      '사주원국 & 음양/일주해설',
-      '사주강약에 따른 특성',
-      '격국으로 보는 직업운',
-      '연애운 & 배우자운',
-      '용신과 개운법',
-      '살풀이 & 삼재',
-      '시기별 운세'
+      '✨ 총론 (한마디 요약)',
+      '🌊 오행 분석',
+      '🏔️ 일주 해석',
+      '🔥 행동/실행력',
+      '💎 강점/가치',
+      '😎 성격 심층',
+      '💼 직업운',
+      '💰 재물운',
+      '💕 연애운',
+      '🏠 가족관계',
+      '👥 친구/인간관계',
+      '🗺️ 개운 장소',
+      '💪 마무리 격려'
     ];
 
     try {
@@ -259,9 +272,9 @@
     } catch (error) {
       console.error('AI 분석 에러:', error);
       // 각 섹션에 에러 메시지 표시
-      for (let i = 1; i <= 7; i++) {
+      for (let i = 1; i <= 13; i++) {
         const el = document.getElementById(`section${i}-content`);
-        if (el.querySelector('.loading-placeholder')) {
+        if (el && el.querySelector('.loading-placeholder')) {
           el.innerHTML = `<p style="color: #E53E3E">AI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하고, ANTHROPIC_API_KEY가 설정되어 있는지 확인해주세요.</p>`;
         }
       }
@@ -321,7 +334,7 @@
   // ============================================================
   restartBtn.addEventListener('click', () => {
     // 섹션 내용 초기화
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 13; i++) {
       document.getElementById(`section${i}-content`).innerHTML =
         '<div class="loading-placeholder">AI가 분석 중입니다...</div>';
     }
@@ -357,16 +370,22 @@
     text += `━━━━━━━━━━━━━━━\n\n`;
 
     const sectionTitles = [
-      '사주원국 & 음양/일주해설',
-      '사주강약에 따른 특성',
-      '격국으로 보는 직업운',
-      '연애운 & 배우자운',
-      '용신과 개운법',
-      '살풀이 & 삼재',
-      '시기별 운세'
+      '총론 (한마디 요약)',
+      '오행 분석',
+      '일주 해석',
+      '행동/실행력',
+      '강점/가치',
+      '성격 심층',
+      '직업운',
+      '재물운',
+      '연애운',
+      '가족관계',
+      '친구/인간관계',
+      '개운 장소',
+      '마무리 격려'
     ];
 
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 13; i++) {
       const el = document.getElementById(`section${i}-content`);
       if (el && !el.querySelector('.loading-placeholder')) {
         text += `\n【 ${sectionTitles[i-1]} 】\n`;

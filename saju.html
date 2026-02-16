@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사주풀이 - AI 사주 분석 | 사주풀이</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#764ba2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="사주풀이">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ============ 입력 화면 ============ -->
+  <div id="input-screen" class="screen active">
+    <div class="input-container">
+      <div class="logo-area">
+        <a href="/" class="back-to-home">← 홈으로</a>
+        <div class="logo-icon">🔮</div>
+        <h1>사주풀이</h1>
+        <p class="subtitle">AI가 풀어주는 나만의 사주 이야기</p>
+      </div>
+
+      <form id="saju-form">
+        <div class="form-group">
+          <label for="name">이름</label>
+          <input type="text" id="name" placeholder="이름을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+          <label>성별</label>
+          <div class="gender-buttons">
+            <button type="button" class="gender-btn active" data-gender="남">👨 남성</button>
+            <button type="button" class="gender-btn" data-gender="여">👩 여성</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="birthdate">생년월일 (양력)</label>
+          <div class="date-inputs">
+            <input type="number" id="birth-year" placeholder="년" min="1920" max="2025" required>
+            <span class="date-sep">년</span>
+            <input type="number" id="birth-month" placeholder="월" min="1" max="12" required>
+            <span class="date-sep">월</span>
+            <input type="number" id="birth-day" placeholder="일" min="1" max="31" required>
+            <span class="date-sep">일</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="birthtime">태어난 시간</label>
+          <div class="time-inputs">
+            <input type="number" id="birth-hour" placeholder="시" min="0" max="23" required>
+            <span class="date-sep">시</span>
+            <input type="number" id="birth-minute" placeholder="분" min="0" max="59" value="0">
+            <span class="date-sep">분</span>
+          </div>
+          <p class="hint">모르면 12시 0분으로 입력하세요 (오시)</p>
+        </div>
+
+        <button type="submit" class="submit-btn">
+          <span class="btn-text">사주 분석 시작</span>
+          <span class="btn-icon">→</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ 로딩 화면 ============ -->
+  <div id="loading-screen" class="screen">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <h2>사주를 분석하고 있습니다...</h2>
+      <p id="loading-status">사주 팔자를 계산하는 중...</p>
+      <div class="loading-progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <p class="loading-section" id="loading-section"></p>
+    </div>
+  </div>
+
+  <!-- ============ 결과 화면 ============ -->
+  <div id="result-screen" class="screen">
+    <div class="result-container">
+      <!-- 헤더 -->
+      <header class="result-header">
+        <h1><span class="highlight">사주풀이</span> 리포트</h1>
+        <div class="person-info" id="person-info"></div>
+      </header>
+
+      <!-- 목차 -->
+      <nav class="toc" id="toc">
+        <h3>📋 목차</h3>
+        <ul>
+          <li><a href="#section1" data-num="1">✨ 총론 (한마디 요약)</a></li>
+          <li><a href="#section2" data-num="2">🌊 오행 분석</a></li>
+          <li><a href="#section3" data-num="3">🏔️ 일주 해석</a></li>
+          <li><a href="#section4" data-num="4">🔥 행동/실행력</a></li>
+          <li><a href="#section5" data-num="5">💎 강점/가치</a></li>
+          <li><a href="#section6" data-num="6">😎 성격 심층</a></li>
+          <li><a href="#section7" data-num="7">💼 직업운</a></li>
+          <li><a href="#section8" data-num="8">💰 재물운</a></li>
+          <li><a href="#section9" data-num="9">💕 연애운</a></li>
+          <li><a href="#section10" data-num="10">🏠 가족관계</a></li>
+          <li><a href="#section11" data-num="11">👥 친구/인간관계</a></li>
+          <li><a href="#section12" data-num="12">🗺️ 개운 장소</a></li>
+          <li><a href="#section13" data-num="13">💪 마무리 격려</a></li>
+        </ul>
+      </nav>
+
+      <!-- 사주 원국 차트 -->
+      <section class="saju-chart-section" id="saju-chart-section">
+        <h2 class="section-title">사주 원국 (四柱原局)</h2>
+        <div class="saju-chart" id="saju-chart"></div>
+        <div class="ohaeng-chart" id="ohaeng-chart"></div>
+      </section>
+
+      <!-- 섹션 1~13 -->
+      <section class="content-section" id="section1">
+        <h2 class="section-title"><span class="section-num">01</span>✨ 총론 (한마디 요약)</h2>
+        <div class="section-content" id="section1-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section2">
+        <h2 class="section-title"><span class="section-num">02</span>🌊 오행 분석</h2>
+        <div class="section-content" id="section2-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section3">
+        <h2 class="section-title"><span class="section-num">03</span>🏔️ 일주 해석</h2>
+        <div class="section-content" id="section3-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section4">
+        <h2 class="section-title"><span class="section-num">04</span>🔥 행동/실행력</h2>
+        <div class="section-content" id="section4-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section5">
+        <h2 class="section-title"><span class="section-num">05</span>💎 강점/가치</h2>
+        <div class="section-content" id="section5-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section6">
+        <h2 class="section-title"><span class="section-num">06</span>😎 성격 심층</h2>
+        <div class="section-content" id="section6-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section7">
+        <h2 class="section-title"><span class="section-num">07</span>💼 직업운</h2>
+        <div class="section-content" id="section7-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section8">
+        <h2 class="section-title"><span class="section-num">08</span>💰 재물운</h2>
+        <div class="section-content" id="section8-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section9">
+        <h2 class="section-title"><span class="section-num">09</span>💕 연애운</h2>
+        <div class="section-content" id="section9-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section10">
+        <h2 class="section-title"><span class="section-num">10</span>🏠 가족관계</h2>
+        <div class="section-content" id="section10-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section11">
+        <h2 class="section-title"><span class="section-num">11</span>👥 친구/인간관계</h2>
+        <div class="section-content" id="section11-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section12">
+        <h2 class="section-title"><span class="section-num">12</span>🗺️ 개운 장소</h2>
+        <div class="section-content" id="section12-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section13">
+        <h2 class="section-title"><span class="section-num">13</span>💪 마무리 격려</h2>
+        <div class="section-content" id="section13-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <!-- 대운 차트 -->
+      <section class="daeun-section" id="daeun-section">
+        <h2 class="section-title">대운 흐름</h2>
+        <div class="daeun-chart" id="daeun-chart"></div>
+      </section>
+
+      <!-- 공유/저장 버튼 -->
+      <div class="share-section" id="share-section">
+        <h3>결과 공유 & 저장</h3>
+        <div class="share-buttons">
+          <button class="share-btn" id="btn-share" title="공유하기">
+            <span class="share-icon">📤</span> 공유하기
+          </button>
+          <button class="share-btn" id="btn-save-image" title="이미지로 저장">
+            <span class="share-icon">📷</span> 이미지 저장
+          </button>
+          <button class="share-btn" id="btn-copy-text" title="텍스트 복사">
+            <span class="share-icon">📋</span> 텍스트 복사
+          </button>
+          <button class="share-btn" id="btn-save-pdf" title="PDF 저장">
+            <span class="share-icon">📄</span> PDF 저장
+          </button>
+        </div>
+        <div class="share-toast" id="share-toast">복사되었습니다!</div>
+      </div>
+
+      <!-- 푸터 -->
+      <footer class="result-footer">
+        <p>이 결과는 AI가 전통 사주학을 기반으로 생성한 것으로, 재미와 참고 용도입니다.</p>
+        <button class="restart-btn" id="restart-btn">다시 분석하기</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="js/saju-data.js"></script>
+  <script src="js/saju-core.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

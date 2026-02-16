@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>궁합 분석 - AI 궁합 | 사주풀이</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#764ba2">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ============ 입력 화면 ============ -->
+  <div id="input-screen" class="screen active">
+    <div id="gunghap-input" class="gunghap-bg">
+      <div class="gunghap-container">
+        <div class="logo-area">
+          <a href="/" class="back-to-home">← 홈으로</a>
+          <div class="logo-icon">💕</div>
+          <h1>궁합 분석</h1>
+          <p class="subtitle">AI가 분석하는 우리 둘의 궁합</p>
+        </div>
+
+        <form id="gunghap-form">
+          <!-- 나의 정보 -->
+          <div class="person-section">
+            <h2 class="person-label">💜 나의 정보</h2>
+            <div class="form-group">
+              <label for="name1">이름</label>
+              <input type="text" id="name1" placeholder="이름을 입력하세요" required>
+            </div>
+            <div class="form-group">
+              <label>성별</label>
+              <div class="gender-buttons">
+                <button type="button" class="gender-btn active" data-person="1" data-gender="남">👨 남성</button>
+                <button type="button" class="gender-btn" data-person="1" data-gender="여">👩 여성</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>생년월일 (양력)</label>
+              <div class="date-inputs">
+                <input type="number" id="birth-year1" placeholder="년" min="1920" max="2025" required>
+                <span class="date-sep">년</span>
+                <input type="number" id="birth-month1" placeholder="월" min="1" max="12" required>
+                <span class="date-sep">월</span>
+                <input type="number" id="birth-day1" placeholder="일" min="1" max="31" required>
+                <span class="date-sep">일</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>태어난 시간</label>
+              <div class="time-inputs">
+                <input type="number" id="birth-hour1" placeholder="시" min="0" max="23" required>
+                <span class="date-sep">시</span>
+                <input type="number" id="birth-minute1" placeholder="분" min="0" max="59" value="0">
+                <span class="date-sep">분</span>
+              </div>
+              <p class="hint">모르면 12시 0분으로 입력하세요</p>
+            </div>
+          </div>
+
+          <div class="heart-divider">💕</div>
+
+          <!-- 상대방 정보 -->
+          <div class="person-section">
+            <h2 class="person-label">💗 상대방 정보</h2>
+            <div class="form-group">
+              <label for="name2">이름</label>
+              <input type="text" id="name2" placeholder="이름을 입력하세요" required>
+            </div>
+            <div class="form-group">
+              <label>성별</label>
+              <div class="gender-buttons">
+                <button type="button" class="gender-btn" data-person="2" data-gender="남">👨 남성</button>
+                <button type="button" class="gender-btn active" data-person="2" data-gender="여">👩 여성</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>생년월일 (양력)</label>
+              <div class="date-inputs">
+                <input type="number" id="birth-year2" placeholder="년" min="1920" max="2025" required>
+                <span class="date-sep">년</span>
+                <input type="number" id="birth-month2" placeholder="월" min="1" max="12" required>
+                <span class="date-sep">월</span>
+                <input type="number" id="birth-day2" placeholder="일" min="1" max="31" required>
+                <span class="date-sep">일</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>태어난 시간</label>
+              <div class="time-inputs">
+                <input type="number" id="birth-hour2" placeholder="시" min="0" max="23" required>
+                <span class="date-sep">시</span>
+                <input type="number" id="birth-minute2" placeholder="분" min="0" max="59" value="0">
+                <span class="date-sep">분</span>
+              </div>
+              <p class="hint">모르면 12시 0분으로 입력하세요</p>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn gunghap-submit">
+            <span class="btn-text">💕 궁합 분석 시작</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 로딩 화면 ============ -->
+  <div id="loading-screen" class="screen">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <h2>궁합을 분석하고 있습니다...</h2>
+      <p id="loading-status">두 분의 사주를 비교하는 중...</p>
+      <div class="loading-progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 결과 화면 ============ -->
+  <div id="result-screen" class="screen">
+    <div class="result-container">
+      <!-- 헤더 -->
+      <header class="result-header gunghap-result-header">
+        <h1>💕 <span class="highlight">궁합</span> 리포트</h1>
+        <div class="person-info" id="person-info"></div>
+      </header>
+
+      <!-- 궁합 점수 -->
+      <section class="gunghap-score-section" id="score-section">
+        <div class="score-circle-wrapper">
+          <div class="score-circle" id="score-circle">
+            <svg viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#f0e6ff" stroke-width="12"/>
+              <circle cx="100" cy="100" r="90" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
+                      stroke-dasharray="565.48" stroke-dashoffset="565.48" stroke-linecap="round"
+                      transform="rotate(-90 100 100)" id="score-ring"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#667eea"/>
+                  <stop offset="100%" style="stop-color:#f093fb"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-text">
+              <span class="score-num" id="score-num">0</span>
+              <span class="score-unit">점</span>
+            </div>
+          </div>
+          <p class="score-label" id="score-label">궁합 점수 계산 중...</p>
+        </div>
+
+        <!-- 세부 점수 -->
+        <div class="sub-scores" id="sub-scores"></div>
+      </section>
+
+      <!-- AI 분석 섹션들 -->
+      <section class="content-section" id="section-summary">
+        <h2 class="section-title">💕 총평</h2>
+        <div class="section-content" id="section-summary-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section-personality">
+        <h2 class="section-title">😊 성격 궁합</h2>
+        <div class="section-content" id="section-personality-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section-love">
+        <h2 class="section-title">💗 연애 스타일</h2>
+        <div class="section-content" id="section-love-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section-conflict">
+        <h2 class="section-title">⚡ 갈등 포인트</h2>
+        <div class="section-content" id="section-conflict-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <section class="content-section" id="section-advice">
+        <h2 class="section-title">🌟 관계 조언</h2>
+        <div class="section-content" id="section-advice-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <!-- 푸터 -->
+      <footer class="result-footer">
+        <p>이 결과는 AI가 전통 사주학을 기반으로 생성한 것으로, 재미와 참고 용도입니다.</p>
+        <button class="restart-btn" id="restart-btn">다시 분석하기</button>
+        <a href="/" class="restart-btn" style="display:inline-block; margin-top:8px; background:transparent; color:var(--primary); text-decoration:none;">홈으로 돌아가기</a>
+      </footer>
+    </div>
+  </div>
+
+  <script src="js/saju-data.js"></script>
+  <script src="js/saju-core.js"></script>
+  <script src="js/gunghap-app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Service Worker - PWA 오프라인 지원
-const CACHE_NAME = 'saju-v1';
+const CACHE_NAME = 'saju-v2';
 const CACHE_URLS = [
   '/',
   '/index.html',

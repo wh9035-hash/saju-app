@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 신년운세 - AI 운세 | 사주풀이</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#764ba2">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ============ 입력 화면 ============ -->
+  <div id="input-screen" class="screen active">
+    <div class="unse-bg">
+      <div class="input-container">
+        <div class="logo-area">
+          <a href="/" class="back-to-home">← 홈으로</a>
+          <div class="logo-icon">⭐</div>
+          <h1>2026 신년운세</h1>
+          <p class="subtitle">AI가 분석하는 2026년 나의 운세</p>
+        </div>
+
+        <form id="unse-form">
+          <div class="form-group">
+            <label for="name">이름</label>
+            <input type="text" id="name" placeholder="이름을 입력하세요" required>
+          </div>
+
+          <div class="form-group">
+            <label>성별</label>
+            <div class="gender-buttons">
+              <button type="button" class="gender-btn active" data-gender="남">👨 남성</button>
+              <button type="button" class="gender-btn" data-gender="여">👩 여성</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>생년월일 (양력)</label>
+            <div class="date-inputs">
+              <input type="number" id="birth-year" placeholder="년" min="1920" max="2025" required>
+              <span class="date-sep">년</span>
+              <input type="number" id="birth-month" placeholder="월" min="1" max="12" required>
+              <span class="date-sep">월</span>
+              <input type="number" id="birth-day" placeholder="일" min="1" max="31" required>
+              <span class="date-sep">일</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>태어난 시간</label>
+            <div class="time-inputs">
+              <input type="number" id="birth-hour" placeholder="시" min="0" max="23" required>
+              <span class="date-sep">시</span>
+              <input type="number" id="birth-minute" placeholder="분" min="0" max="59" value="0">
+              <span class="date-sep">분</span>
+            </div>
+            <p class="hint">모르면 12시 0분으로 입력하세요</p>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <span class="btn-text">⭐ 2026 운세 보기</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 로딩 화면 ============ -->
+  <div id="loading-screen" class="screen">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <h2>2026년 운세를 분석 중입니다...</h2>
+      <p id="loading-status">사주를 계산하는 중...</p>
+      <div class="loading-progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 결과 화면 ============ -->
+  <div id="result-screen" class="screen">
+    <div class="result-container">
+      <!-- 헤더 -->
+      <header class="result-header unse-result-header">
+        <h1>⭐ <span class="highlight">2026</span> 신년운세</h1>
+        <div class="person-info" id="person-info"></div>
+      </header>
+
+      <!-- 총운 -->
+      <section class="content-section" id="section-total">
+        <h2 class="section-title">🌟 2026년 총운</h2>
+        <div class="section-content" id="section-total-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <!-- 월별 운세 -->
+      <section class="unse-monthly-section" id="monthly-section">
+        <h2 class="section-title">📅 월별 운세</h2>
+        <div class="monthly-grid" id="monthly-grid">
+          <!-- JS로 렌더링 -->
+        </div>
+      </section>
+
+      <!-- AI 상세 분석 -->
+      <section class="content-section" id="section-detail">
+        <h2 class="section-title">🔮 상세 운세 분석</h2>
+        <div class="section-content" id="section-detail-content">
+          <div class="loading-placeholder">AI가 분석 중입니다...</div>
+        </div>
+      </section>
+
+      <!-- 푸터 -->
+      <footer class="result-footer">
+        <p>이 결과는 AI가 전통 사주학을 기반으로 생성한 것으로, 재미와 참고 용도입니다.</p>
+        <button class="restart-btn" id="restart-btn">다시 분석하기</button>
+        <a href="/" class="restart-btn" style="display:inline-block; margin-top:8px; background:transparent; color:var(--primary); text-decoration:none;">홈으로 돌아가기</a>
+      </footer>
+    </div>
+  </div>
+
+  <script src="js/saju-data.js"></script>
+  <script src="js/saju-core.js"></script>
+  <script src="js/unse-app.js"></script>
+</body>
+</html>

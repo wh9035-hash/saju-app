@@ -46,6 +46,63 @@ const SajuCore = (function() {
   }
 
   // ============================================================
+  // 진태양시(眞太陽時) 보정
+  // KST(동경 135도)를 서울 실제 경도(127도) 기준으로 보정
+  // ============================================================
+
+  /**
+   * 진태양시 계산
+   * @param {number} year - 년
+   * @param {number} month - 월
+   * @param {number} day - 일
+   * @param {number} hour - 시 (0~23)
+   * @param {number} minute - 분 (0~59)
+   * @returns {{ hour, minute, correction, originalHour, originalMinute }}
+   */
+  function getTrueSolarTime(year, month, day, hour, minute) {
+    // 1. 1월 1일부터의 일수(N) 계산
+    const date = new Date(year, month - 1, day);
+    const jan1 = new Date(year, 0, 1);
+    const N = Math.floor((date - jan1) / (1000 * 60 * 60 * 24)) + 1;
+
+    // 2. 균시차(Equation of Time) 계산
+    //    B = 360/365 × (N - 81) (도 단위)
+    //    EoT = 9.87×sin(2B) - 7.53×cos(B) - 1.5×sin(B) (분 단위)
+    const B = (360 / 365) * (N - 81);
+    const Brad = B * Math.PI / 180; // 라디안 변환
+    const EoT = 9.87 * Math.sin(2 * Brad) - 7.53 * Math.cos(Brad) - 1.5 * Math.sin(Brad);
+
+    // 3. 경도 보정
+    //    서울(127°E)과 표준자오선(135°E)의 차이
+    //    (127 - 135) × 4분/도 = -32분
+    const localLongitude = 127;
+    const standardLongitude = 135;
+    const longitudeCorrection = (localLongitude - standardLongitude) * 4; // -32분
+
+    // 4. 총 보정값 (분)
+    const totalCorrection = longitudeCorrection + EoT;
+    const correctionRounded = Math.round(totalCorrection);
+
+    // 5. 보정된 시간 계산
+    let totalMinutes = hour * 60 + minute + correctionRounded;
+
+    // 날짜 넘김 처리
+    if (totalMinutes < 0) totalMinutes += 24 * 60;
+    if (totalMinutes >= 24 * 60) totalMinutes -= 24 * 60;
+
+    const correctedHour = Math.floor(totalMinutes / 60);
+    const correctedMinute = totalMinutes % 60;
+
+    return {
+      hour: correctedHour,
+      minute: correctedMinute,
+      correction: correctionRounded,
+      originalHour: hour,
+      originalMinute: minute
+    };
+  }
+
+  // ============================================================
   // 핵심: 년주, 월주, 일주, 시주 계산
   // ============================================================
 
@@ -676,21 +733,26 @@ const SajuCore = (function() {
   // ============================================================
 
   function calculate(name, gender, year, month, day, hour, minute) {
+    // 0. 진태양시 보정 (KST → 서울 실제 태양시)
+    const trueSolar = getTrueSolarTime(year, month, day, hour, minute);
+    const correctedHour = trueSolar.hour;
+    const correctedMinute = trueSolar.minute;
+
     // 1. 사주 (년월일시)
     const yearGanji = getYearGanji(year, month, day);
     const dayGanji = getDayGanji(year, month, day);
 
-    // 자시(23시 이후) 처리: 일진 넘김
-    let effectiveDay = day;
-    if (hour >= 23) {
-      // 자시는 다음날의 시작이므로 일간도 다음날로
-      const nextDayGanji = getDayGanji(year, month, day + 1);
-      // 하지만 전통적으로 야자시(23~24시)는 당일로 보는 관점도 있음
-      // 여기서는 야자시를 다음날로 처리
+    // 자시(23시 이후) 처리: 일진을 다음날로 넘김
+    // 자시는 다음날의 시작이므로 시주 천간 계산 시 다음날 일간을 기준으로 함
+    let hourDayGanji = dayGanji;
+    if (correctedHour >= 23) {
+      // 다음날의 일주를 구해서 시주 천간 계산에 사용
+      const nextDate = new Date(year, month - 1, day + 1);
+      hourDayGanji = getDayGanji(nextDate.getFullYear(), nextDate.getMonth() + 1, nextDate.getDate());
     }
 
     const monthGanji = getMonthGanji(year, month, day, yearGanji.gan);
-    const hourGanji = getHourGanji(hour, minute, dayGanji.gan);
+    const hourGanji = getHourGanji(correctedHour, correctedMinute, hourDayGanji.gan);
 
     // 2. 오행 분석
     const ohaeng = analyzeOhaeng(
@@ -769,6 +831,7 @@ const SajuCore = (function() {
       // 기본 정보
       name, gender,
       birthInfo: { year, month, day, hour, minute },
+      trueSolarTime: trueSolar,
       animal,
 
       // 사주 원국
@@ -796,9 +859,109 @@ const SajuCore = (function() {
     };
   }
 
+  // ============================================================
+  // 궁합 계산
+  // ============================================================
+
+  function calculateGunghap(person1Data, person2Data) {
+    let score = 50; // 기본 점수
+    const details = [];
+
+    const p1DayGan = person1Data.saju.day.gan;
+    const p2DayGan = person2Data.saju.day.gan;
+    const p1DayJi = person1Data.saju.day.ji;
+    const p2DayJi = person2Data.saju.day.ji;
+    const p1YearJi = person1Data.saju.year.ji;
+    const p2YearJi = person2Data.saju.year.ji;
+
+    const p1DayOhaeng = D.CHEONGAN_OHAENG[p1DayGan];
+    const p2DayOhaeng = D.CHEONGAN_OHAENG[p2DayGan];
+
+    // 1. 일간 오행 관계 (상생/상극)
+    if (D.OHAENG_SANGSAENG[p1DayOhaeng] === p2DayOhaeng || D.OHAENG_SANGSAENG[p2DayOhaeng] === p1DayOhaeng) {
+      score += 15;
+      details.push({ label: '일간 오행', desc: '상생 관계 (+15)', score: 15 });
+    } else if (D.OHAENG_SANGGEUK[p1DayOhaeng] === p2DayOhaeng || D.OHAENG_SANGGEUK[p2DayOhaeng] === p1DayOhaeng) {
+      score -= 10;
+      details.push({ label: '일간 오행', desc: '상극 관계 (-10)', score: -10 });
+    } else if (p1DayOhaeng === p2DayOhaeng) {
+      score += 5;
+      details.push({ label: '일간 오행', desc: '같은 오행 (+5)', score: 5 });
+    } else {
+      details.push({ label: '일간 오행', desc: '보통', score: 0 });
+    }
+
+    // 2. 일간 천간합 (갑기, 을경, 병신, 정임, 무계)
+    const cheonganHapPairs = [['갑','기'], ['을','경'], ['병','신'], ['정','임'], ['무','계']];
+    const isCheonganHap = cheonganHapPairs.some(pair =>
+      (p1DayGan === pair[0] && p2DayGan === pair[1]) || (p1DayGan === pair[1] && p2DayGan === pair[0])
+    );
+    if (isCheonganHap) {
+      score += 15;
+      details.push({ label: '천간합', desc: '일간이 천간합! (+15)', score: 15 });
+    }
+
+    // 3. 일지 육합
+    if (D.JIJI_YUKHAP[p1DayJi] === p2DayJi) {
+      score += 20;
+      details.push({ label: '일지 육합', desc: `${p1DayJi}${p2DayJi} 육합! (+20)`, score: 20 });
+    }
+
+    // 4. 일지 충
+    if (D.JIJI_CHUNG[p1DayJi] === p2DayJi) {
+      score -= 15;
+      details.push({ label: '일지 충', desc: `${p1DayJi}${p2DayJi} 충 (-15)`, score: -15 });
+    }
+
+    // 5. 년지 삼합/반합
+    for (const samhap of D.JIJI_SAMHAP) {
+      const hasP1 = samhap.members.includes(p1YearJi);
+      const hasP2 = samhap.members.includes(p2YearJi);
+      if (hasP1 && hasP2 && p1YearJi !== p2YearJi) {
+        score += 10;
+        details.push({ label: '년지 삼합', desc: `${samhap.ohaeng}의 삼합/반합 (+10)`, score: 10 });
+        break;
+      }
+    }
+
+    // 6. 년지 충
+    if (D.JIJI_CHUNG[p1YearJi] === p2YearJi) {
+      score -= 8;
+      details.push({ label: '년지 충', desc: `${p1YearJi}${p2YearJi} 충 (-8)`, score: -8 });
+    }
+
+    // 7. 오행 보완 관계 (상대가 나의 부족 오행을 채워주는지)
+    const p1Ohaeng = person1Data.ohaeng.main;
+    const p2Ohaeng = person2Data.ohaeng.main;
+    let complementScore = 0;
+    for (const oh of ['목', '화', '토', '금', '수']) {
+      if (p1Ohaeng[oh] === 0 && p2Ohaeng[oh] >= 2) complementScore += 3;
+      if (p2Ohaeng[oh] === 0 && p1Ohaeng[oh] >= 2) complementScore += 3;
+    }
+    if (complementScore > 0) {
+      score += Math.min(complementScore, 10);
+      details.push({ label: '오행 보완', desc: `부족한 오행 보완 (+${Math.min(complementScore, 10)})`, score: Math.min(complementScore, 10) });
+    }
+
+    // 점수 범위 제한 (0~100)
+    score = Math.max(0, Math.min(100, score));
+
+    // 점수별 등급
+    let grade;
+    if (score >= 85) grade = '천생연분';
+    else if (score >= 70) grade = '좋은 궁합';
+    else if (score >= 55) grade = '무난한 궁합';
+    else if (score >= 40) grade = '노력이 필요한 궁합';
+    else grade = '주의가 필요한 궁합';
+
+    return { score, grade, details };
+  }
+
   // 공개 API
   return {
     calculate,
+    calculateGunghap,
+    getTrueSolarTime,
     getSipsung,
     getSibiUnsung,
     getDayGanji,
